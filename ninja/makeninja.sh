@@ -13,5 +13,9 @@ mkdir -p .ninja
 echo "# Built by makeninja.sh" > build.ninja
 echo "include ninja.common" >> build.ninja
 
-find src/main/cpp -name "*.cpp" -or -name "*.c" -or -name "*.cc" | ${HELPER} libfathomdb-perftools-extensions "extraflags = -rdynamic" >> build.ninja
+find src/main/cpp ! -name "TestMain.cpp" -and -name "*.cpp" -or -name "*.c" -or -name "*.cc" > .ninja/src_files
+
+cat .ninja/src_files | ${HELPER} libfathomdb-perftools-extensions.so >> build.ninja
+
+echo "src/main/cpp/TestMain.cpp"  | ${HELPER} test-fathomdb-perftools-extensions "+bin/libfathomdb-perftools-extensions.so"  "extralibs = -lfathomdb-perftools-extensions" >> build.ninja
 

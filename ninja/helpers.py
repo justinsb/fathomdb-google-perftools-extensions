@@ -33,9 +33,12 @@ def visit_directory(dir_path):
 def do_main():
   out = sys.argv[1]
   defs = []
+  deps = []
   for arg in sys.argv[2:]:
     if '=' in arg:
       defs.append(arg)
+    elif '+' in arg:
+      deps.append(arg[1:])
     else:
       visit_directory(arg)
 
@@ -44,13 +47,17 @@ def do_main():
     found_file(line)
   object_args = ' '.join(objects)
 
+  dep_args = ''
+  if deps:
+    dep_args = '| ' + ' '.join(deps)
+
   if out.endswith('.so'):
     rule = 'linksharedlib'
   elif out.endswith('.a'):
     rule = 'linkstaticlib'
   else:
     rule = 'link'
-  print 'build bin/%s: %s %s' % (out, rule, object_args)
+  print 'build bin/%s: %s %s %s' % (out, rule, object_args, dep_args)
   for definition in defs:
     print '  %s' % (definition)
 
