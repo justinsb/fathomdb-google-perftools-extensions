@@ -23,7 +23,7 @@ rule cxx
   command = $CXX -MMD -MF $out.d $cxx_flags -c $in -o $out
 
 rule linksharedlib
-  command = $CXX -shared -fPIC -DPIC $cflags -Wl,-soname -Wl,$out -o $out $in $linkdirs $extralibs $deplibs
+  command = $CXX -shared -fPIC -DPIC $cflags -o $out $in $linkdirs $extralibs $deplibs
 
 rule linkstaticlib
   command = $AR crs $out $in
