@@ -221,9 +221,14 @@ tribool HttpRequestParser::consume(HttpRequest& req, char input) {
 					return false;
 				}
 				postDataLength_ = contentLength;
-				req.post_data.reserve(contentLength);
-				state_ = post_data;
-				return boost::indeterminate;
+				if (contentLength != 0) {
+					req.post_data.reserve(contentLength);
+					state_ = post_data;
+					return boost::indeterminate;
+				} else {
+					// Don't wait for data that is never coming!
+					return true;
+				}
 			}
 			return true;
 		}
