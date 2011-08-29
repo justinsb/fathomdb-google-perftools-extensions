@@ -33,19 +33,16 @@ HttpServer::HttpServer(const string& address, const string& port, unique_ptr<Htt
 	acceptor_.listen();
 }
 
-void HttpServer::run() {
+void HttpServer::RunAsync() {
 	start_accept();
 
+	CHECK(threads_.empty());
+
 	// Create a pool of threads to run all of the io_services.
-	vector < shared_ptr<boost::thread> > threads;
 	for (size_t i = 0; i < thread_pool_size_; ++i) {
 		shared_ptr < boost::thread > thread(new boost::thread(boost::bind(&boost::asio::io_service::run, &io_service_)));
-		threads.push_back(thread);
+		threads_.push_back(thread);
 	}
-
-	// Wait for all threads in the pool to exit.
-	for (size_t i = 0; i < threads.size(); ++i)
-		threads[i]->join();
 }
 
 void HttpServer::start_accept() {
@@ -61,8 +58,16 @@ void HttpServer::handle_accept(const boost::system::error_code& e) {
 	start_accept();
 }
 
-void HttpServer::handle_stop() {
+void HttpServer::Stop(bool sync) {
 	io_service_.stop();
+}
+
+void HttpServer::WaitForExit() {
+	// Wait for all threads in the pool to exit.
+	for (auto it = threads_.begin(); it != threads_.end(); ) {
+		(*it)->join();
+		it = threads_.erase(it);
+	}
 }
 
 }

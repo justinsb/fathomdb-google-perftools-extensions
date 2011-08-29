@@ -7,6 +7,7 @@
 #include <memory>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread/thread.hpp>
 
 namespace fathomdb {
 namespace http {
@@ -21,8 +22,20 @@ public:
 	/// serve up files from the given directory.
 	explicit HttpServer(const string& address, const string& port, unique_ptr<HttpRequestHandler>&& request_handler, size_t thread_pool_size);
 
-	/// Run the server's io_service loop.
-	void run();
+	// Run the webserver until a Stop request is received
+	void Run() {
+		RunAsync();
+		WaitForExit();
+	}
+
+	// Run the webserver; does not wait for exit
+	void RunAsync();
+
+	// Stop the webserver (asynchronously)
+	void Stop(bool sync = true);
+
+	// Wait for all threads to exit
+	void WaitForExit();
 
 private:
 	/// Initiate an asynchronous accept operation.
@@ -30,9 +43,6 @@ private:
 
 	/// Handle completion of an asynchronous accept operation.
 	void handle_accept(const boost::system::error_code& e);
-
-	/// Handle a request to stop the server.
-	void handle_stop();
 
 	/// The number of threads that will call io_service::run().
 	size_t thread_pool_size_;
@@ -51,6 +61,8 @@ private:
 
 	/// The handler for all incoming requests.
 	unique_ptr<HttpRequestHandler> request_handler_;
+
+	vector < shared_ptr<boost::thread> > threads_;
 };
 
 }

@@ -31,7 +31,7 @@ int main_http() {
 		}
 
 		// Run the server until stopped.
-		httpServer->run();
+		httpServer->Run();
 	} catch (exception& e) {
 		std::cerr << "exception: " << e.what() << "\n";
 	}
