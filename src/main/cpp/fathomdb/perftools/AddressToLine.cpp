@@ -145,6 +145,10 @@ return stdout;
 }
 
 vector<string> AddressToLine::mapAddressesToLines(const vector<string>& addresses) {
+if (addresses.empty()) {
+	return vector<string>();
+}
+
 string stdin;
 
 {

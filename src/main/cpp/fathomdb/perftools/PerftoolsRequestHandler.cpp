@@ -69,6 +69,15 @@ void PerftoolsRequestHandler::handleSymbolRequest(const HttpRequest& request, Ht
 	vector<string> addresses;
 	boost::algorithm::split(addresses, request.post_data, boost::algorithm::is_any_of("+"));
 
+	// Remove any empty strings (e.g. from our parsing above)
+	for (auto it = addresses.begin(); it != addresses.end();) {
+		if (it->empty()) {
+			it = addresses.erase(it);
+		} else {
+			it++;
+		}
+	}
+
 	AddressToLine addressToLine;
 
 	vector<string> lines = addressToLine.mapAddressesToLines(addresses);
