@@ -5,6 +5,7 @@
 #include <boost/thread/thread.hpp>
 #include "HttpConnection.h"
 #include "HttpRequestHandler.h"
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -13,15 +14,15 @@ namespace http {
 
 HttpServer::HttpServer(const string& address, const string& port, unique_ptr<HttpRequestHandler>&& request_handler, size_t thread_pool_size) :
 	thread_pool_size_(thread_pool_size), signals_(io_service_), acceptor_(io_service_), new_connection_(), request_handler_(move(request_handler)) {
-	// Register to handle the signals that indicate when the server should exit.
-	// It is safe to register for the same signal multiple times in a program,
-	// provided all registration for the specified signal is made through Asio.
-	signals_.add(SIGINT);
-	signals_.add(SIGTERM);
-#if defined(SIGQUIT)
-	signals_.add(SIGQUIT);
-#endif // defined(SIGQUIT)
-	signals_.async_wait(boost::bind(&HttpServer::handle_stop, this));
+//	// Register to handle the signals that indicate when the server should exit.
+//	// It is safe to register for the same signal multiple times in a program,
+//	// provided all registration for the specified signal is made through Asio.
+//	signals_.add(SIGINT);
+//	signals_.add(SIGTERM);
+//#if defined(SIGQUIT)
+//	signals_.add(SIGQUIT);
+//#endif // defined(SIGQUIT)
+//	signals_.async_wait(boost::bind(&HttpServer::HandleStopSignal, this));
 
 	// Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
 	boost::asio::ip::tcp::resolver resolver(io_service_);
