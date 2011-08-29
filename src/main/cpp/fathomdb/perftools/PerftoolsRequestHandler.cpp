@@ -118,7 +118,7 @@ unique_ptr<HttpResponse> PerftoolsRequestHandler::handleRequest(const HttpReques
 	// Decode url to path.
 	std::string requestPath = request.getRequestPath();
 
-	LOG(INFO) << "requestPath=" << requestPath;
+	LOG(INFO) << "Got request: " << request.method << " " << requestPath;
 
 	if (requestPath == "/pprof/symbol") {
 		if (request.method == "GET") {
@@ -133,6 +133,8 @@ unique_ptr<HttpResponse> PerftoolsRequestHandler::handleRequest(const HttpReques
 			handleSymbolRequest(request, *response);
 			return response;
 		}
+
+		throw HttpException(HttpResponse::method_not_supported);
 	}
 
 	if (requestPath == "/pprof/cmdline") {
@@ -204,6 +206,8 @@ unique_ptr<HttpResponse> PerftoolsRequestHandler::handleRequest(const HttpReques
 		unique_ptr<HttpResponse> suspendResponse(new SuspendProcessing(n * 1000));
 		return suspendResponse;
 	}
+
+	LOG(WARNING) << "Handler not found for request: " << request.method << " " << requestPath;
 
 	throw HttpException(HttpResponse::not_found);
 }
