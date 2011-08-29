@@ -1,3 +1,6 @@
+bin/
+.ninja_log
+build.ninja
 *.o
 *.o.d
 
