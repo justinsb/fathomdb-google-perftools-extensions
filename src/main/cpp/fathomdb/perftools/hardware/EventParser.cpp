@@ -264,9 +264,85 @@ void HardwareEvent::fillAttributes(perf_event_attr *attr) {
 	return nullptr;
 }
 
+/*static*/unique_ptr<SoftwareEvent> SoftwareEvent::tryParse(const string& s) {
+	//	cpu-clock                                          [Software event]
+	//	  task-clock                                         [Software event]
+	//	  page-faults OR faults                              [Software event]
+	//	  minor-faults                                       [Software event]
+	//	  major-faults                                       [Software event]
+	//	  context-switches OR cs                             [Software event]
+	//	  cpu-migrations OR migrations                       [Software event]
+	//	  alignment-faults                                   [Software event]
+	//	  emulation-faults                                   [Software event]
+
+
+	if (s == "cpu-clock") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_CPU_CLOCK));
+		return event;
+	}
+
+	if (s == "task-clock") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_TASK_CLOCK));
+		return event;
+	}
+
+	if (s == "page-faults" || s == "faults") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_PAGE_FAULTS));
+		return event;
+	}
+
+	if (s == "context-switches" || s == "cs") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_CONTEXT_SWITCHES));
+		return event;
+	}
+
+	if (s == "cpu-migrations" || s == "migrations") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_CPU_MIGRATIONS));
+		return event;
+	}
+
+	if (s == "minor-faults") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_PAGE_FAULTS_MIN));
+		return event;
+	}
+
+	if (s == "major-faults") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_PAGE_FAULTS_MAJ));
+		return event;
+	}
+
+	if (s == "alignment-faults") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_ALIGNMENT_FAULTS));
+		return event;
+	}
+
+	if (s == "emulation-faults") {
+		unique_ptr<SoftwareEvent> event(new SoftwareEvent(PERF_COUNT_SW_EMULATION_FAULTS));
+		return event;
+	}
+
+	return nullptr;
+}
+
+void SoftwareEvent::fillAttributes(perf_event_attr *attr) {
+	CHECK_EQ(attr->size, sizeof(perf_event_attr))
+		;
+
+	attr->type = PERF_TYPE_SOFTWARE;
+	attr->config = id_;
+}
+
 void EventParser::parseEvent(const string& eventName, perf_event_attr *attr) {
 	{
 		unique_ptr<HardwareEvent> event = HardwareEvent::tryParse(eventName);
+		if (event) {
+			event->fillAttributes(attr);
+			return;
+		}
+	}
+
+	{
+		unique_ptr<SoftwareEvent> event = SoftwareEvent::tryParse(eventName);
 		if (event) {
 			event->fillAttributes(attr);
 			return;

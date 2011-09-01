@@ -41,7 +41,6 @@ private:
 };
 
 class HardwareEvent {
-	static const char * * names;
 public:
 	static unique_ptr<HardwareEvent> tryParse(const string& s);
 
@@ -55,6 +54,22 @@ public:
 
 private:
 	perf_hw_id id_;
+};
+
+class SoftwareEvent {
+public:
+	static unique_ptr<SoftwareEvent> tryParse(const string& s);
+
+	string str();
+
+	SoftwareEvent(perf_sw_ids id) :
+		id_(id) {
+	}
+
+	void fillAttributes(perf_event_attr *attr);
+
+private:
+	perf_sw_ids id_;
 };
 
 class EventParser {
