@@ -246,6 +246,11 @@ void EventChannel::doMmap(int fd) {
 	size_t mmapSize = buffer_size_ + PAGE_SIZE;
 	mmap_ = mmap(NULL, mmapSize, prot, MAP_SHARED, fd, 0);
 	if (mmap_ == MAP_FAILED) {
+		if (errno == EPERM) {
+			printf("Failed to mmap event source: EPERM.  This can happen if the mmap causes the resource limit on locked memory to be exceeded; setting /proc/sys/kernel/perf_event_paranoid to -1 bypasses the check\n");
+		} else {
+			perror("Failed to mmap event source");
+		}
 		throw invalid_argument("Failed to mmap event source");
 	}
 
