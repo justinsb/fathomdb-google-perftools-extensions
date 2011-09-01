@@ -34,6 +34,10 @@ PerftoolsRequestHandler::~PerftoolsRequestHandler() {
 
 string readWholeFile(const path& filePath, int reserve) {
 	ifstream ifs(filePath.string());
+	if (ifs.fail()) {
+		LOG(WARNING) << "Error opening file: " << filePath;
+		throw invalid_argument("Unable to open file");
+	}
 	string str;
 
 	// If the kernel is dynamically generating it, we don't want to put more load onto the kernel
@@ -211,7 +215,16 @@ unique_ptr<HttpResponse> PerftoolsRequestHandler::handleRequest(const HttpReques
 
 		LOG(WARNING) << "HTTP request to profile for " << n << " seconds";
 
-		ProfilerStart(profilepath_.c_str());
+		if (!ProfilerStart(profilepath_.c_str())) {
+			ProfilerState state;
+			ProfilerGetCurrentState(&state);
+			if (state.enabled) {
+				// This one hurt ... nice to give a real error message
+				throw invalid_argument("Profiling is already running");
+			}
+			throw invalid_argument("Unable to start profiling");
+		}
+
 		unique_ptr<HttpResponse> suspendResponse(new SuspendProcessing(n * 1000));
 		return suspendResponse;
 	}
