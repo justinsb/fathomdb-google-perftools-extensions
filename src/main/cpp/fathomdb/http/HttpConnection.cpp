@@ -98,7 +98,7 @@ void HttpConnection::buildReply(bool continuation) {
 	} catch (HttpException& e) {
 		reply_ = HttpResponse::stock_reply(e.statusCode());
 	} catch (exception& e) {
-		LOG(WARNING) << "Unexpected internal error" << e.what();
+		LOG(WARNING) << "Unexpected internal error: " << e.what();
 		reply_ = HttpResponse::stock_reply(HttpResponse::status_type::internal_server_error);
 	} catch (...) {
 		LOG(WARNING) << "Unknown internal error";
