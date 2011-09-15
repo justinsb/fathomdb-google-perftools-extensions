@@ -30,24 +30,31 @@ bool removeIfStartsWith(string& s, const string& find) {
 	return found;
 }
 
-EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_arg) {
-	// We gradually whittle down the events_arg as we parse it
-	string events(events_arg);
+/*static*/EventOptions EventOptions::parse(const string& spec, string& leftover) {
+	leftover = spec;
 
-	bool backtrace = false;
-	bool exclude_kernel = false;
+	EventOptions options;
 
 	while (true) {
-		if (removeIfStartsWith(events, "backtrace:")) {
-			backtrace = true;
-		} else if (removeIfStartsWith(events, "nokernel:")) {
-			exclude_kernel = true;
+		if (removeIfStartsWith(leftover, "backtrace:")) {
+			options.backtrace = true;
+		} else if (removeIfStartsWith(leftover, "nokernel:")) {
+			options.exclude_kernel = true;
 		} else {
 			break;
 		}
 	}
 
-	if (!event_system_) {
+	return options;
+}
+
+HardwarePerftoolsEventSource::HardwarePerftoolsEventSource(const string& event_spec, ::ProfileRecordCallback callback) :
+	callback_(callback), events_enabled_(false) {
+	options_ = EventOptions::parse(event_spec, event_spec_);
+}
+
+HardwareEventManager& HardwarePerftoolsEventSource::getEventManager() {
+	if (!event_manager_) {
 		// The system isn't yet bootstrapped enough for this to be safe :-(
 		//		LOG(WARNING) << "Starting hardware event profiling.  Events = " << events;
 
@@ -55,7 +62,7 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 		format |= PERF_SAMPLE_IP;
 		format |= PERF_SAMPLE_TID;
 
-		if (backtrace) {
+		if (options_.backtrace) {
 			format |= PERF_SAMPLE_CALLCHAIN;
 		}
 
@@ -66,7 +73,7 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 		//	format|= PERF_FORMAT_ID;
 
 		SampleFormat sampleFormat(format);
-		event_system_.reset(new HardwareEventManager(sampleFormat));
+		event_manager_.reset(new HardwareEventManager(sampleFormat));
 	}
 
 	return *event_manager_;
@@ -120,9 +127,9 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 		// This lets us profile with unpriviledged users
 		// We only need this if /proc/sys/kernel/perf_event_paranoid == 2 (in single proc mode)
 		// TODO: Detect when this is required?
-		attr.exclude_kernel = exclude_kernel ? 1 : 0;
+		attr.exclude_kernel = options_.exclude_kernel ? 1 : 0;
 
-		attr.sample_type = event_system_->format();
+		attr.sample_type = eventManager.format();
 
 		//attr.freq = 1; /* use freq, not period  */
 		//events_[i].hw_.sample_frequence = ???
@@ -136,7 +143,7 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 
 	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, CpuSet::buildEachCpu(), ThreadSet::buildSingleProcess(getpid())));
 
-	EventSet& eventSet = event_system_->addEventSet(move(eventSetPtr));
+	EventSet& eventSet = eventManager.addEventSet(move(eventSetPtr));
 	return eventSet;
 }
 
@@ -166,7 +173,7 @@ private:
 void * HardwarePerftoolsEventSource::BackgroundThreadMain(void * arg) {
 	HardwarePerftoolsEventSource * instance = (HardwarePerftoolsEventSource*) arg;
 
-	HardwareEventManager& eventManager = *instance->event_system_;
+	HardwareEventManager& eventManager = instance->getEventManager();
 
 	ProfilerEventSink sink(eventManager.format(), instance->callback_);
 

@@ -16,11 +16,21 @@ using namespace std;
 class HardwareEventManager;
 class EventSet;
 
+class EventOptions {
+public:
+	bool backtrace;
+	bool exclude_kernel;
+
+	EventOptions() :
+		backtrace(false), exclude_kernel(false) {
+	}
+
+	static EventOptions parse(const string& spec, string& leftover);
+};
+
 class HardwarePerftoolsEventSource: public ProfileEventSource {
 public:
-	HardwarePerftoolsEventSource(const string& event_spec, ::ProfileRecordCallback callback) :
-		event_spec_(event_spec), callback_(callback), events_enabled_(false) {
-	}
+	HardwarePerftoolsEventSource(const string& event_spec, ::ProfileRecordCallback callback);
 
 	void RegisterThread(int callback_count);
 
@@ -39,11 +49,13 @@ public:
 	EventSet& BuildEventSystem(const string& events);
 
 private:
+	HardwareEventManager& getEventManager();
+
 	//  SpinLock lock_;
 	string event_spec_;
 	ProfileRecordCallback callback_;
 
-	unique_ptr<HardwareEventManager> event_system_;
+	unique_ptr<HardwareEventManager> event_manager_;
 
 	void StartBackgroundThread();
 	void StopBackgroundThread();
@@ -51,6 +63,7 @@ private:
 	pthread_t thread_;
 	bool thread_stop_;
 	bool events_enabled_;
+	EventOptions options_;
 
 	static void * BackgroundThreadMain(void * arg);
 };
