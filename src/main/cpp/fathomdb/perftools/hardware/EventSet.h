@@ -148,11 +148,8 @@ private:
 
 class CpuSet {
 public:
-	static CpuSet all();
-
-	static CpuSet empty() {
-		return CpuSet();
-	}
+	static CpuSet buildEachCpu();
+	static CpuSet buildWildcard();
 
 	const vector<cpuid_t>& cpus() const {
 		return cpus_;
@@ -201,17 +198,15 @@ public:
 		return threads_[index];
 	}
 
-	static ThreadSet findThreadsInProcess(pid_t pid);
+//	static ThreadSet findThreadsInProcess(pid_t pid);
+	static ThreadSet buildSingleProcess(pid_t pid);
+	static ThreadSet buildWildcard();
 
-	static ThreadSet empty() {
-		return ThreadSet();
-	}
 private:
 	vector<pid_t> threads_;
 };
 
 class EventSetSpecifier {
-
 public:
 	EventSetSpecifier(const vector<EventSpecification>& events) :
 		events_(events) {
@@ -243,10 +238,10 @@ class EventSet {
 	vector<unique_ptr<Event> > events_;
 	CpuSet cpus_;
 	ThreadSet threads_;
+	EventSetSpecifier event_spec_;
 
 public:
-	EventSet(const EventSetSpecifier& specifier, const CpuSet& cpus);
-	EventSet(const EventSetSpecifier& specifier, const ThreadSet& threads);
+	EventSet(const EventSetSpecifier& specifier, const CpuSet& cpus, const ThreadSet& threads);
 	~EventSet();
 
 	Event& operator[](int index);
@@ -255,6 +250,8 @@ public:
 	}
 
 	void setEnabled(bool enable);
+
+//	Event& attachThread(pid_t tid);
 
 private:
 	void buildEvents(const EventSetSpecifier& eventSetSpec);

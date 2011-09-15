@@ -57,7 +57,7 @@ void TestHardwarePerformanceEvents() {
 	}
 
 	//	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, CpuSet::all()));
-	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, ThreadSet::findThreadsInProcess(getpid())));
+	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, CpuSet::buildEachCpu(), ThreadSet::buildSingleProcess(getpid())));
 
 	EventSet& eventSet = eventSystem.addEventSet(move(eventSetPtr));
 

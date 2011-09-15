@@ -92,7 +92,7 @@ EventSpecification::EventSpecification(const perf_event_attr& attr, const string
 	return cpus;
 }
 
-/*static*/CpuSet CpuSet::all() {
+/*static*/CpuSet CpuSet::buildEachCpu() {
 	static vector<cpuid_t> allCpus;
 
 	if (allCpus.empty()) {
@@ -104,10 +104,31 @@ EventSpecification::EventSpecification(const perf_event_attr& attr, const string
 	return CpuSet(allCpus);
 }
 
-/*static*/ThreadSet ThreadSet::findThreadsInProcess(pid_t pid) {
-	vector<pid_t> threads = LinuxThreadDiscovery::discoverThreads(pid);
+/*static*/CpuSet CpuSet::buildWildcard() {
+	vector<cpuid_t> cpus;
+	cpus.push_back(-1);
+
+	return CpuSet(move(cpus));
+}
+
+///*static*/ThreadSet ThreadSet::findThreadsInProcess(pid_t pid) {
+//	vector<pid_t> threads = LinuxThreadDiscovery::discoverThreads(pid);
+//	return ThreadSet(move(threads));
+//}
+
+
+/*static*/ThreadSet ThreadSet::buildSingleProcess(pid_t pid) {
+	vector<pid_t> threads;
+	threads.push_back(pid);
 	return ThreadSet(move(threads));
 }
+
+/*static*/ThreadSet ThreadSet::buildWildcard() {
+	vector<pid_t> threads;
+	threads.push_back(-1);
+	return ThreadSet(move(threads));
+}
+
 
 EventChannel& EventChannelSet::getChannel(key_t key) {
 	unique_ptr<EventChannel>& channel = channels_[key];
@@ -198,35 +219,49 @@ void EventSet::setEnabled(bool enable) {
 	}
 }
 
-EventSet::EventSet(const EventSetSpecifier& eventSetSpec, const CpuSet& cpus) :
-	cpus_(cpus), threads_(ThreadSet::empty()) {
-	buildEvents(eventSetSpec);
-}
+//EventSet::EventSet(const EventSetSpecifier& eventSetSpec, const CpuSet& cpus) :
+//	cpus_(cpus), threads_(ThreadSet::empty()), event_spec_(eventSetSpec) {
+//	buildEvents(eventSetSpec);
+//}
 
-EventSet::EventSet(const EventSetSpecifier& eventSetSpec, const ThreadSet& threads) :
-	cpus_(CpuSet::empty()), threads_(threads) {
+EventSet::EventSet(const EventSetSpecifier& eventSetSpec, const CpuSet& cpus, const ThreadSet& threads) :
+	cpus_(cpus), threads_(threads), event_spec_(eventSetSpec) {
 	buildEvents(eventSetSpec);
 }
 
 void EventSet::buildEvents(const EventSetSpecifier& eventSetSpec) {
-	for (size_t j = 0; j < eventSetSpec.size(); j++) {
-		const EventSpecification& eventSpec = eventSetSpec[j];
+	for (size_t k = 0; k < eventSetSpec.size(); k++) {
+		const EventSpecification& eventSpec = eventSetSpec[k];
 
-		if (cpus_.size() != 0) {
-			CHECK(threads_.size() == 0);
-			for (size_t i = 0; i < cpus_.size(); i++) {
-				unique_ptr<Event> event(new Event(eventSpec, cpus_[i], -1));
-				events_.push_back(move(event));
-			}
-		} else {
-			CHECK(cpus_.size() == 0);
-			for (size_t i = 0; i < threads_.size(); i++) {
-				unique_ptr<Event> event(new Event(eventSpec, -1, threads_[i]));
+		CHECK(cpus_.size() != 0);
+		CHECK(threads_.size() != 0);
+
+		for (size_t i = 0; i < cpus_.size(); i++) {
+			for (size_t j = 0; j < threads_.size(); j++) {
+				unique_ptr<Event> event(new Event(eventSpec, cpus_[i], threads_[j]));
 				events_.push_back(move(event));
 			}
 		}
 	}
 }
+
+//Event& EventSet::attachThread(pid_t tid) {
+//	if (cpus_.size() != 0) {
+//		throw invalid_argument("Attempt to attach to thread when running in CPU mode");
+//	}
+//
+//	// TODO: Add to thread list?  Do we need to keep cpus/threads anyway?
+//
+//	// TODO: Validate uniqueness?
+//
+//	for (size_t j = 0; j < event_spec_.size(); j++) {
+//		const EventSpecification& eventSpec = event_spec_[j];
+//		unique_ptr<Event> event(new Event(eventSpec, -1, tid));
+//		events_.push_back(move(event));
+//	}
+//
+//	return *events_.back();
+//}
 
 EventChannel::EventChannel(SampleFormat format, bool overwrite, int pages) :
 	overwrite_(overwrite), mmap_(0), mmap_fd_(-1), last_read_offset_(0), format_(format) {

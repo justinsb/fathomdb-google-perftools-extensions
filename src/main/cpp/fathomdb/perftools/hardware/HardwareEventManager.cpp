@@ -33,6 +33,21 @@ EventSet& HardwareEventManager::addEventSet(unique_ptr<EventSet> && eventSetPtr)
 	return eventSet;
 }
 
+//void HardwareEventManager::attachThread(pid_t tid) {
+//	for (auto it = event_sets_.begin(); it != event_sets_.end(); it++) {
+//		EventSet& eventSet = **it;
+//
+//		Event& event = eventSet.attachThread(tid);
+//
+//		// We separate out the channels so that multiple cpus/threads don't go into the same buffer
+//		EventChannelSet::key_t key(event.cpu(), event.tid());
+//		EventChannel& channel = channels_.getChannel(key);
+//		channel.add(event.fileDescriptor(), poll_list_);
+//
+//		event.setEnabled(true);
+//	}
+//}
+
 HardwareEventManager::HardwareEventManager(SampleFormat format) :
 poll_list_(MAX_POLL), channels_(format), format_(format) {
 }

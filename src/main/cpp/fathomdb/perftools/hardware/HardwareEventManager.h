@@ -32,6 +32,9 @@ public:
 		return format_;
 	}
 
+	// If another thread is detected, add our hooks to it
+//	void attachThread(pid_t tid);
+
 private:
 	vector<unique_ptr<EventSet> > event_sets_;
 	FileDescriptorPollList poll_list_;

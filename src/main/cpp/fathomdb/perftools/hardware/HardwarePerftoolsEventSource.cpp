@@ -4,10 +4,14 @@
 #include <pthread.h>
 #include <stdexcept>
 
+#include <linux/perf_event.h>
+
 #include <glog/logging.h>
 
 #include "EventSink.h"
 #include "HardwareEventManager.h"
+#include <iostream>
+#include <sys/syscall.h>
 
 using namespace std;
 
@@ -17,31 +21,7 @@ namespace hardware {
 
 #define FATAL(x) { throw invalid_argument(x); }
 
-void HardwarePerftoolsEventSource::RegisterThread(int callback_count) {
-	// TODO: How should EventSystem cope with new threads?
-	// By tracking forks?, or requiring manual registration?
-}
-
-void HardwarePerftoolsEventSource::StartBackgroundThread() {
-	if (thread_) {
-		FATAL("Background thread already running");
-	}
-
-	EventSet& eventSet = BuildEventSystem(event_spec_);
-
-	thread_stop_ = false;
-
-	pthread_t thread;
-	if (pthread_create(&thread, nullptr, BackgroundThreadMain, this)) {
-		FATAL("Cannot create timer thread");
-	}
-
-	thread_ = thread;
-
-	eventSet.setEnabled(true);
-}
-
-inline bool removeIfStartsWith(string& s, const string& find) {
+bool removeIfStartsWith(string& s, const string& find) {
 	bool found = false;
 	if (0 == s.compare(0, find.size(), find)) {
 		found = true;
@@ -89,6 +69,40 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 		event_system_.reset(new HardwareEventManager(sampleFormat));
 	}
 
+	return *event_manager_;
+}
+
+void HardwarePerftoolsEventSource::RegisterThread(int callback_count) {
+	// We track threads automatically by hooking the pid
+	//	pid_t tid = (pid_t) syscall(SYS_gettid);
+	//	getEventManager().attachThread(tid);
+}
+
+void HardwarePerftoolsEventSource::StartBackgroundThread() {
+	if (thread_) {
+		FATAL("Background thread already running");
+	}
+
+	EventSet& eventSet = BuildEventSystem(event_spec_);
+
+	thread_stop_ = false;
+
+	pthread_t thread;
+	if (pthread_create(&thread, nullptr, BackgroundThreadMain, this)) {
+		FATAL("Cannot create timer thread");
+	}
+
+	thread_ = thread;
+
+	eventSet.setEnabled(true);
+}
+
+EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_arg) {
+	// We gradually whittle down the events_arg as we parse it
+	string events(events_arg);
+
+	HardwareEventManager& eventManager = getEventManager();
+
 	EventSetSpecifier eventSetSpec = EventSetSpecifier::parse(events);
 
 	for (size_t j = 0; j < eventSetSpec.size(); j++) {
@@ -120,8 +134,7 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 		attr.sample_period = 100000;
 	}
 
-	//	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, CpuSet::all()));
-	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, ThreadSet::findThreadsInProcess(getpid())));
+	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, CpuSet::buildEachCpu(), ThreadSet::buildSingleProcess(getpid())));
 
 	EventSet& eventSet = event_system_->addEventSet(move(eventSetPtr));
 	return eventSet;
