@@ -302,11 +302,15 @@ void EventChannel::joinMmap(int fd, int joinToFd) {
 		throw invalid_argument("Failed to join event source to mmap");
 }
 
-void EventChannel::readEvents(EventSink& sink) {
+int EventChannel::readEvents(EventSink& sink) {
+	int eventCount = 0;
+
 	while (true) {
 		perf_event_header * event = read();
 		if (!event)
 			break;
+
+		eventCount++;
 
 		//			ret = perf_session__parse_sample(self, event, &sample);
 		//			if (ret) {
@@ -386,6 +390,8 @@ void EventChannel::readEvents(EventSink& sink) {
 			break;
 		}
 	}
+
+	return eventCount;
 }
 
 perf_event_header * EventChannel::read() {

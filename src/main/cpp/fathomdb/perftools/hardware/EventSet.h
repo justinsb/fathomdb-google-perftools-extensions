@@ -91,7 +91,7 @@ public:
 
 	void add(int fd, class FileDescriptorPollList& pollList);
 
-	void readEvents(EventSink& sink);
+	int readEvents(EventSink& sink);
 
 private:
 	void doMmap(int fd);
