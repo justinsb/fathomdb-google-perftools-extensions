@@ -44,7 +44,13 @@ string readWholeFile(const path& filePath, int reserve) {
 	// Also, tellg doesn't seem to work on /proc files
 	if (reserve == 0) {
 		ifs.seekg(0, ios::end);
-		str.reserve(ifs.tellg());
+		size_t size = ifs.tellg();
+		if (size != 0) {
+			if (size > 1024 * 1024) {
+				LOG(INFO) << "Buffering large file (size = " << size << ")";
+			}
+			str.reserve(size);
+		}
 		ifs.seekg(0, ios::beg);
 	} else {
 		str.reserve(reserve);
