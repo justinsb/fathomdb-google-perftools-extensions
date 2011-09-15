@@ -1,6 +1,8 @@
 // See COPYRIGHT for copyright
 #include "HardwareEventManager.h"
 
+#include <glog/logging.h>
+
 using namespace std;
 
 namespace fathomdb {
@@ -13,7 +15,9 @@ void HardwareEventManager::poll(EventSink& sink, int timeout) {
 		auto keys = channels_.keys();
 		for (auto it = keys.begin(); it != keys.end(); it++) {
 			EventChannel& channel = channels_.getChannel(*it);
-			channel.readEvents(sink);
+			int eventCount = channel.readEvents(sink);
+
+			//LOG(INFO) << it->first << "," << it->second << " => " << eventCount << endl;
 		}
 	}
 }
