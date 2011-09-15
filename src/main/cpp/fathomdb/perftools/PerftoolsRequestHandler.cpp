@@ -206,7 +206,7 @@ unique_ptr<HttpResponse> PerftoolsRequestHandler::handleRequest(const HttpReques
 	if (requestPath == "/pprof/profile") {
 		{
 			ostringstream s;
-			s << "/var/tmp/pprof.profile." << getpid();
+			s << "/var/tmp/pprof." << getpid() << ".profile";
 
 			profilepath_ = s.str();
 		}
