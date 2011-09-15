@@ -134,11 +134,20 @@ EventSet& HardwarePerftoolsEventSource::BuildEventSystem(const string& events_ar
 		//attr.freq = 1; /* use freq, not period  */
 		//events_[i].hw_.sample_frequence = ???
 
-		attr.freq = 0;
+		// trace fork/exit
+		attr.task = 1;
+
+		// inherit works in "one cpu, one pid" mode
+		// inherit does not work in "all cpus, one tid" mode
+		attr.inherit = 1;
 
 		// TODO: Expose this in the event spec string??
 		// (or compute a sensible default value??)
-		attr.sample_period = 100000;
+		//attr.sample_period = 100000;
+		// By default, we ask the kernel to auto-tune to match our target
+		// sample_freq is events per second i.e. Hz
+		attr.freq = 1;
+		attr.sample_freq = 1000;
 	}
 
 	unique_ptr<EventSet> eventSetPtr(new EventSet(eventSetSpec, CpuSet::buildEachCpu(), ThreadSet::buildSingleProcess(getpid())));
