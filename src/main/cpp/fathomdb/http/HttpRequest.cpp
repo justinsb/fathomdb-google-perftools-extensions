@@ -57,31 +57,42 @@ multimap<string, string> HttpRequest::parseQueryString() const {
 	ParsedUri parsed = parse();
 	string& query = parsed.query;
 
-	string::const_iterator pos = query.begin();
-	string::const_iterator end = query.end();
-
 	multimap<string, string> map;
 
-	while (pos < end) {
-		string::const_iterator sep = find(pos, end, '&');
-		string::const_iterator eq = find(pos, sep, '=');
+	size_t pos = 0;
+	while (pos < query.size()) {
+		size_t sep = query.find('&', pos);
+		size_t eq = query.find('=', pos);
 
-		CHECK(pos <= eq);
+		//LOG(INFO) << "query=" << query << " sep=" << sep << " eq=" << eq;
 
-		string name(pos, eq);
+		if (sep == string::npos) {
+			sep = query.size();
+		}
+
+		if (eq == string::npos) {
+			eq = sep;
+		}
+
+		if (eq > sep) {
+			// The equals is part of the next key
+			eq = sep;
+		}
+
+		string name = query.substr(pos, eq - pos);
+
 		string value;
-
 		if (eq == sep) {
-			value.clear();
+//			value.clear();
 		} else {
 			eq++;
 			CHECK(eq <= sep);
-			value.assign(eq, sep);
+			value = query.substr(eq, sep - eq);
 		}
 
 		map.insert(make_pair(name, value));
 
-		pos = sep;
+		pos = sep + 1;
 	}
 
 	return map;
@@ -92,25 +103,36 @@ string HttpRequest::getRequestPath() const {
 	return parsed.path;
 }
 
-string HttpRequest::getQueryParameter(const string& key, const string& defaultValue) const {
+
+bool HttpRequest::getQueryParameter(const string& key, string * dest) const {
 	ParsedUri parsed = parse();
 
 	if (parsed.query.empty()) {
-		return defaultValue;
+		return false;
 	}
 
 	multimap<string, string> map = parseQueryString();
 	auto range = map.equal_range(key);
 	int count = distance(range.first, range.second);
 	if (count == 0) {
-		return defaultValue;
+		return false;
 	}
 
 	if (count != 1) {
 		LOG(WARNING) << "getQueryParameter only returning first value for " << key;
 	}
 
-	return range.first->second;
+	*dest = range.first->second;
+	return true;
+}
+
+
+string HttpRequest::getQueryParameter(const string& key, const string& defaultValue) const {
+	string value;
+	if (getQueryParameter(key, &value)) {
+		return value;
+	}
+	return defaultValue;
 }
 
 }

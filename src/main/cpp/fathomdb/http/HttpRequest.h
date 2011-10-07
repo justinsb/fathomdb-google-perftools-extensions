@@ -33,6 +33,7 @@ public:
 	string getRequestPath() const;
 
 	string getQueryParameter(const string& key, const string& defaultValue) const;
+	bool getQueryParameter(const string& key, string * dest) const;
 
 private:
 	ParsedUri parse() const;
