@@ -4,8 +4,8 @@ CXX = g++-4.6
 
 includes = -I/usr/local/include
 
-compiler_flags=-g -O3 -march=native -DNDEBUG -fno-omit-frame-pointer
-#compiler_flags=-g -march=native -DDEBUG -fno-omit-frame-pointer
+compiler_flags=-g -O3 -DNDEBUG -fno-omit-frame-pointer
+#compiler_flags=-g -DDEBUG -fno-omit-frame-pointer
 common_flags = -pthread  -fPIC -DPIC $includes
 c_flags = $common_flags $compiler_flags -Wall 
 cxx_flags = $common_flags $compiler_flags -Wall -std=c++0x $cxx_includes
