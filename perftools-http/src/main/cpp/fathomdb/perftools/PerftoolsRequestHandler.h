@@ -3,7 +3,7 @@
 #define PERFTOOLSREQUESTHANDLER_H_
 
 #include <string>
-#include "http/HttpRequestHandler.h"
+#include "fathomdb/http/HttpRequestHandler.h"
 
 namespace fathomdb {
 namespace perftools {

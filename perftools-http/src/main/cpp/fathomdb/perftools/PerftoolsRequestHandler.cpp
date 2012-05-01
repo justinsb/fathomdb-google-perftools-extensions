@@ -11,9 +11,9 @@
 #include "google/heap-profiler.h"
 #include "google/profiler.h"
 
-#include "../http/HttpResponse.h"
-#include "../http/HttpRequest.h"
-#include "../http/HttpException.h"
+#include "fathomdb/http/HttpResponse.h"
+#include "fathomdb/http/HttpRequest.h"
+#include "fathomdb/http/HttpException.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include "AddressToLine.h"
