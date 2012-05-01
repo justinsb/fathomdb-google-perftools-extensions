@@ -1,0 +1,33 @@
+AR = ar
+CC = gcc-4.6
+CXX = g++-4.6
+
+includes = -I/usr/local/include
+
+compiler_flags=-g -O3 -DNDEBUG -fno-omit-frame-pointer
+#compiler_flags=-g -DDEBUG -fno-omit-frame-pointer
+common_flags = -pthread  -fPIC -DPIC $includes
+c_flags = $common_flags $compiler_flags -Wall 
+cxx_flags = $common_flags $compiler_flags -Wall -std=c++0x $cxx_includes
+linkflags =
+linkdirs = -Lbin
+
+deplibs = -lboost_thread -lboost_system -lboost_filesystem -lglog -lpthread -lunwind -lgmp -lprofiler -lrt -ltcmalloc 
+
+rule cc
+  depfile = $out.d
+  command = $CC -MMD -MF $out.d $c_flags $cc_extra -c $in -o $out
+
+rule cxx
+  depfile = $out.d
+  command = $CXX -MMD -MF $out.d $cxx_flags -c $in -o $out
+
+rule linksharedlib
+  command = $CXX -shared -fPIC -DPIC $cflags -o $out $in $linkdirs $extralibs $deplibs
+
+rule linkstaticlib
+  command = $AR crs $out $in
+
+rule link
+  command = $CXX $cflags $extraflags  $linkflags -o $out $in $linkdirs -Lgtest $extralibs $deplibs
+
